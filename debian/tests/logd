@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -e
+
+echo "=== service ==="
+service logd status
+
+echo "=== ha_logger ==="
+ha_logger autopkgtest-message
+grep cluster:.*autopkgtest-message /var/log/daemon.log
+
+echo "=== logtest ==="
+/usr/lib/heartbeat/logtest 10 2>&1 || true
+
+for i in 1 2 3 4 5; do
+  if grep 'logtest:.*total message dropped: 0' /var/log/daemon.log
+  then
+    exit 0
+  fi
+
+  sleep 1
+done
+
+exit 1
